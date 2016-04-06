@@ -10,7 +10,7 @@ window.onload = setMap();
 function setMap(){
 
 	 //map frame dimensions
-    var width = window.innerWidth * 0.5,
+    var width = 1060,
         height = 460;
 
      //create new svg container for the map
@@ -55,6 +55,8 @@ function callback(error, csvData, states){
 
        setChart (csvData, colorScale);
 
+       createDropdown (csvData, attrArray);
+
    };
 
 }; //end of setmap function
@@ -63,10 +65,10 @@ function callback(error, csvData, states){
 // bar chart
 function setChart(csvData, colorScale) {
     //chart dimensions
-    var chartWidth = window.innerWidth * 0.425,
-        chartHeight = 460;
-        leftPadding = 25,
-        rightPadding = 2, 
+    var chartWidth = 1060,
+        chartHeight = 463;
+        leftPadding = 5,
+        rightPadding = 5, 
         topBottomPadding = 5,
         chartInnerWidth = chartWidth - leftPadding - rightPadding,
         chartInnerHeight = chartHeight - topBottomPadding * 2,
@@ -80,22 +82,22 @@ function setChart(csvData, colorScale) {
         .attr("height", chartHeight)
         .attr("class", "chart");
 
-    // var chartFrame = chart.append("rect")
-    //     .attr("class", "chartFrame")
-    //     .attr("width", chartInnerWidth)
-    //     .attr("height", chartInnerHeight)
-    //     .attr("transform", translate);
+    var chartFrame = chart.append("rect")
+        .attr("class", "chartFrame")
+        .attr("width", chartInnerWidth)
+        .attr("height", chartInnerHeight)
+        .attr("transform", translate);
 
-    // var chartBackground = chart.append("rect")
-    //     .attr("class", "chartBackground")
-    //     .attr("width", chartInnerWidth)
-    //     .attr("height", chartInnerHeight)
-    //     .attr("transform", translate);
+    var chartBackground = chart.append("rect")
+        .attr("class", "chartBackground")
+        .attr("width", chartInnerWidth)
+        .attr("height", chartInnerHeight)
+        .attr("transform", translate);
 
 
     var yScale = d3.scale.linear ()
-        .range([400, 0])
-        .domain([0, 105]);
+        .range([0, 460])
+        .domain([0, 30]);
 
     // set bars for each state
     var bars = chart.selectAll (".bars")
@@ -103,23 +105,23 @@ function setChart(csvData, colorScale) {
         .enter()
         .append("rect")
         .sort(function(a, b) {
-            return b[expressed] - a[expressed]
+            return a[expressed] - b[expressed]
         })
         .attr("class", function(d) {
             return "bars" + d.name;
         })
-        .attr("width", chartInnerWidth / csvData.length - 1)
+        .attr("width", chartWidth / csvData.length - 2)
         .attr ("x", function(d, i) {
-            return i * (chartInnerWidth / csvData.length) + leftPadding;
+            return i * (chartWidth / csvData.length) + 10;
         })
-        .attr("height", 460)
-        .attr("y", 0)
-        // .attr("height", function (d, i){
-        //     return 463 - yScale (parseFloat (d[expressed]));
-        // })
-        // .attr("y", function (d, i){
-        //     return yScale (parseFloat (d[expressed])) + topBottomPadding;
-        // })
+        // .attr("height", 460)
+        // .attr("y", 0)
+        .attr("height", function (d){
+            return yScale (parseFloat (d[expressed]));
+        })
+        .attr("y", function (d){
+            return 460 - yScale (parseFloat (d[expressed]));
+        })
         .style("fill", function(d){
             return choropleth(d, colorScale);
         });
@@ -129,18 +131,18 @@ function setChart(csvData, colorScale) {
         .enter()
         .append("text")
         .sort(function(a, b){
-            return b[expressed]-a[expressed]
+            return a[expressed]-b[expressed]
         })
         .attr("class", function(d){
-            return "numbers " + d.adm1_code;
+            return "numbers " + d.name;
         })
-        .attr("text-anchor", "middle")
+        .attr("text-anchor", "bottom")
         .attr("x", function(d, i){
             var fraction = (chartWidth - 27) / csvData.length;
-            return (i * fraction + (fraction - 1) / 2) + 25;
+            return (i * fraction + (fraction - 1) / 2) + 7;
         })
         .attr("y", function(d){
-            return yScale(parseFloat(d[expressed])) + 20;
+            return chartHeight - yScale(parseFloat(d[expressed])) - 15;
         })
         .text(function(d){
             return d[expressed];
@@ -151,7 +153,7 @@ function setChart(csvData, colorScale) {
         .attr("x", 40)
         .attr("y", 40)
         .attr("class", "chartTitle")
-        .text("Percent of Need met in Health Professional Shortage Areas (HPSAs) " + expressed[3] + " for each state");
+        .text("Number of Variable A for each state");
 
     //create vertical axis generator
     var yAxis = d3.svg.axis()
@@ -260,6 +262,56 @@ function setEnumerationUnits (northAmerica, map, path, colorScale){
                 return choropleth(d.properties, colorScale);
             });
     };
+
+function createDropdown(csvData) {
+    //add select element
+    var dropdown = d3.select("body")
+        .append("select")
+        .attr("class", "dropdown")
+        .on("change", function(){
+            changeAttribute(this.value, csvData)
+        });
+    //add initial option
+
+    var titleOption = dropdown.append("option")
+        .attr ("class", titleOption)
+        .attr("disabled", "true")
+        .text("Select Attribute");
+    //add attribute name options
+
+    var attrOptions = dropdown.selectAll("attrOptions")
+        .data(attrArray)
+        .enter ()
+        .append("option")
+        .attr("value", function(d) { return d})
+        .text(function (d) { return d});
+};
+
+//dropdown change listener handler
+function changeAttribute (attribute, csvData) {
+    //change the expressed attribute
+    expressed = attribute;
+
+    //recreate color scale
+    var colorScale = makeColorScale (csvData);
+
+    //recolor enumeration units
+    var regions = d3.selectAll(".regions")
+        .style("fill", function (d) {
+            return choropleth(d.properties, colorScale)
+        });
+}
+
+// ON USER SELECTION:
+// 1. Change the expressed attribute
+// 2. Recreate the color scale with new class breaks
+// 3. Recolor each enumeration unit on the map
+// 4. Re-sort each bar on the bar chart
+// 5. Resize each bar on the bar chart
+// 6. Recolor each bar on the bar chart
+
+
+
 
 })();
             
