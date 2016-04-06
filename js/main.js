@@ -1,7 +1,7 @@
 (function (){
 //psuedo-global variables
 //variables for data join
-    var attrArray = ["varA", "varB", "varC", "varD", "varE"];
+    var attrArray = ["Medicare Beneficiaries", "Hospital Beds Per 1000", "Percent of Need Met HPSA", "Cost Barriers", "Medicare Spending Per Enrollee"];
     var expressed = attrArray[0]; //intial attribute
 //begin script when window loads
 window.onload = setMap();
@@ -10,7 +10,7 @@ window.onload = setMap();
 function setMap(){
 
 	 //map frame dimensions
-    var width = 960,
+    var width = window.innerWidth * 0.5,
         height = 460;
 
      //create new svg container for the map
@@ -52,8 +52,121 @@ function callback(error, csvData, states){
        var colorScale = makeColorScale(csvData);
        //add enumeration units
        setEnumerationUnits (northAmerica, map, path, colorScale);
+
+       setChart (csvData, colorScale);
+
    };
+
 }; //end of setmap function
+
+
+// bar chart
+function setChart(csvData, colorScale) {
+    //chart dimensions
+    var chartWidth = window.innerWidth * 0.425,
+        chartHeight = 460;
+        leftPadding = 25,
+        rightPadding = 2, 
+        topBottomPadding = 5,
+        chartInnerWidth = chartWidth - leftPadding - rightPadding,
+        chartInnerHeight = chartHeight - topBottomPadding * 2,
+        translate = "translate(" + leftPadding + "," + topBottomPadding + ")";
+
+    // create second svg element to hold bar chart
+
+    var chart = d3.select("body")
+        .append("svg")
+        .attr("width", chartWidth)
+        .attr("height", chartHeight)
+        .attr("class", "chart");
+
+    // var chartFrame = chart.append("rect")
+    //     .attr("class", "chartFrame")
+    //     .attr("width", chartInnerWidth)
+    //     .attr("height", chartInnerHeight)
+    //     .attr("transform", translate);
+
+    // var chartBackground = chart.append("rect")
+    //     .attr("class", "chartBackground")
+    //     .attr("width", chartInnerWidth)
+    //     .attr("height", chartInnerHeight)
+    //     .attr("transform", translate);
+
+
+    var yScale = d3.scale.linear ()
+        .range([400, 0])
+        .domain([0, 105]);
+
+    // set bars for each state
+    var bars = chart.selectAll (".bars")
+        .data(csvData)
+        .enter()
+        .append("rect")
+        .sort(function(a, b) {
+            return b[expressed] - a[expressed]
+        })
+        .attr("class", function(d) {
+            return "bars" + d.name;
+        })
+        .attr("width", chartInnerWidth / csvData.length - 1)
+        .attr ("x", function(d, i) {
+            return i * (chartInnerWidth / csvData.length) + leftPadding;
+        })
+        .attr("height", 460)
+        .attr("y", 0)
+        // .attr("height", function (d, i){
+        //     return 463 - yScale (parseFloat (d[expressed]));
+        // })
+        // .attr("y", function (d, i){
+        //     return yScale (parseFloat (d[expressed])) + topBottomPadding;
+        // })
+        .style("fill", function(d){
+            return choropleth(d, colorScale);
+        });
+
+    var numbers = chart.selectAll(".numbers")
+        .data(csvData)
+        .enter()
+        .append("text")
+        .sort(function(a, b){
+            return b[expressed]-a[expressed]
+        })
+        .attr("class", function(d){
+            return "numbers " + d.adm1_code;
+        })
+        .attr("text-anchor", "middle")
+        .attr("x", function(d, i){
+            var fraction = (chartWidth - 27) / csvData.length;
+            return (i * fraction + (fraction - 1) / 2) + 25;
+        })
+        .attr("y", function(d){
+            return yScale(parseFloat(d[expressed])) + 20;
+        })
+        .text(function(d){
+            return d[expressed];
+        });
+
+    //create a text element for the chart title
+    var chartTitle = chart.append("text")
+        .attr("x", 40)
+        .attr("y", 40)
+        .attr("class", "chartTitle")
+        .text("Percent of Need met in Health Professional Shortage Areas (HPSAs) " + expressed[3] + " for each state");
+
+    //create vertical axis generator
+    var yAxis = d3.svg.axis()
+        .scale(yScale)
+        .orient("left");
+
+    //place axis
+    var axis = chart.append("g")
+        .attr("class", "axis")
+        .attr("transform", translate)
+        .call(yAxis);
+
+
+};
+
 
 function makeColorScale(data) {
     var colorClasses = [
@@ -70,13 +183,25 @@ function makeColorScale(data) {
     //build array of all values of the expressed attributes
     var domainArray = [];
     for (var i=0; i<data.length; i++){
-        var val = parseFloat(data[i] [expressed]);
+        var val = parseFloat(data[i][expressed]);
         domainArray.push(val);
     };
     //assign array of expressed values as scale domain
     colorScale.domain(domainArray);
     return colorScale;
+
 };
+
+function choropleth (props, colorScale) {
+    var val = parseFloat (props[expressed]);
+
+    if (val && val != NaN) {
+        return colorScale (val);
+    } else {
+        return "#CCC";
+    };
+};
+
 
 function setGraticule (map, path) {
 
@@ -98,7 +223,7 @@ function setGraticule (map, path) {
 
         
         // loop through csv sheet to assign each set of attribute values to geojson region
-        function joinData(northAmerica, csvData){
+function joinData(northAmerica, csvData){
             for (var i=0; i<csvData.length; i++){
                 var csvRegion = csvData[i]; //the current region
                 var csvKey = csvRegion.name; // the csv primary key
@@ -121,15 +246,7 @@ function setGraticule (map, path) {
 
     return northAmerica;
 };
-            
-        // //examine the results
-        // console.log(northAmerica);
-
-        // // var country = map.append("path")
-        // //     .datum(northAmerica)
-        // //     .attr("class", "northAmerica")
-        // //     .attr("d", path);
-
+    
 function setEnumerationUnits (northAmerica, map, path, colorScale){
             var regions = map.selectAll(".regions")
             .data(northAmerica)
@@ -140,23 +257,11 @@ function setEnumerationUnits (northAmerica, map, path, colorScale){
             })
             .attr("d", path)
             .style("fill", function(d){
-                return colorScale(d.properties[expressed]);
+                return choropleth(d.properties, colorScale);
             });
     };
 
-// function choropleth (props, colorScale) {
-//     //make sure attribute value is a number
-//     var val = parseFloat(props[expressed]);
-//     //if attribute value exists, assign a color; otherwise assign gray
-//     if (val && val != NaN) {
-//         return colorScale(val);
-//     } else {
-//         return "#CCC";
-//     };
-// };
-
 })();
             
-
   //range = output
   //domain = input
