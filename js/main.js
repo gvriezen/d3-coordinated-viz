@@ -4,7 +4,7 @@
     var attrArray = ["Medicare Beneficiaries (%)", "Hospital Beds Per 1000 People", "Need Met in HPSAs (%)", "Cost Barriers (%)", "Medicare Spending Per Enrollee"];
     var expressed = attrArray[0]; //intial attribute
 
-    var chartWidth = window.innerWidth * 0.6,
+    var chartWidth = window.innerWidth * 0.7,
         chartHeight = 473;
         leftPadding = 25,
         rightPadding = 2, 
@@ -17,7 +17,8 @@
         .range([0, 460])
         .domain([25, 0]);
 
-    // var currentVariable = attrArray[0];
+    var currentVariable = attrArray[0];
+
     // var currentArray = []; // holds current scale rendered on map
 
     // create second svg element to hold bar chart
@@ -96,6 +97,7 @@ function setChart(csvData, colorScale) {
         .attr("width", chartWidth)
         .attr("height", chartHeight)
         .attr("class", "chart")
+
          
 
     var chartFrame = chart.append("rect")
@@ -172,6 +174,7 @@ function setChart(csvData, colorScale) {
     updateChart(bars, csvData.length, colorScale);
 
 };   //end of setChart()
+
 
 
 function makeColorScale(data) {
@@ -366,6 +369,7 @@ function changeAttribute(attribute, csvData){
         // .duration(500);
 
         updateChart (bars, csvData.length, colorScale);
+        updateDescriptions (csvData);
     }; // end of change attribute
 
 function updateChart (bars, n, colorScale) {
@@ -394,8 +398,8 @@ function highlight(props){
     //change stroke
     var selected = d3.selectAll ("." + props.name)
         .style({
-            "stroke": "blue",
-            "stroke-width": "2"
+            "stroke": "#ffff00",
+            "stroke-width": "2.5"
         });
     setLabel(props);
 };
