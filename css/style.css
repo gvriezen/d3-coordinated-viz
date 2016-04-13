@@ -3,13 +3,17 @@ body {
     }
 .map {
 	/*border: medium solid #fff;*/
-	margin: 10px 0 10px 20px;
+	/*margin: 10px 0 10px 20px;*/
+    margin-top: 45px;
+   
 }
 
 .siteTitle {
     font-size: 16pt;
     color: #fff;
     position: absolute;
+    font-weight: bold;
+    text-align: center;
 }
 
 
@@ -45,18 +49,21 @@ body {
 
 .chart {
     float: right;
-    margin: 7px 20px 0 0;
+   /* margin: 7px 20px 0 0;*/
     position: absolute;
+    
 }
 
 .chartTitle {
     font-family: sans-serif;
-    font-size: 1.5em;
+    font-size: 1em;
     font-weight: bold;
 }
 
 .chartBackground {
     fill: transparent;
+    /*position: absolute;*/
+   /* float: right;*/
 
 }
 
@@ -65,6 +72,8 @@ body {
     stroke: #999;
     stroke-width: 3px;
     shape-rendering: crispEdges;
+   /* position: absolute;
+    float: right;*/
 
   }
 

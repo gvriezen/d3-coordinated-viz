@@ -4,7 +4,7 @@
     var attrArray = ["Medicare Beneficiaries (%)", "Hospital Beds Per 1000 People", "Need Met in HPSAs (%)", "Cost Barriers (%)", "Medicare Spending Per Enrollee"];
     var expressed = attrArray[0]; //intial attribute
 
-    var chartWidth = window.innerWidth * 0.9,
+    var chartWidth = window.innerWidth * 0.6,
         chartHeight = 473;
         leftPadding = 25,
         rightPadding = 2, 
@@ -17,6 +17,9 @@
         .range([0, 460])
         .domain([25, 0]);
 
+    // var currentVariable = attrArray[0];
+    // var currentArray = []; // holds current scale rendered on map
+
     // create second svg element to hold bar chart
 
 //begin script when window loads
@@ -26,7 +29,7 @@ window.onload = setMap();
 function setMap(){
 
 	 //map frame dimensions
-    var width = window.innerWidth * 0.9,
+    var width = window.innerWidth * 0.7,
         height = 460;
 
      //create new svg container for the map
@@ -78,7 +81,7 @@ function setMap(){
 
        createDropdown (csvData);
 
-    
+       // dynamicScale (csvData);
    };
 
 }; //end of setmap function
@@ -92,7 +95,8 @@ function setChart(csvData, colorScale) {
         .append("svg")
         .attr("width", chartWidth)
         .attr("height", chartHeight)
-        .attr("class", "chart");
+        .attr("class", "chart")
+         
 
     var chartFrame = chart.append("rect")
         .attr("class", "chartFrame")
@@ -115,9 +119,9 @@ function setChart(csvData, colorScale) {
             return a[expressed] - b[expressed]
         })
         .attr("class", function(d) {
-            return "bars" + d.name;
+            return "bars" + "regions " + d.name;
         })
-        .attr("width", chartInnerWidth / csvData.length - 10) 
+        .attr("width", chartWidth / csvData.length - 1) 
         .on("mouseover", highlight)
         .on("mouseout", dehighlight)
         .on("mousemove", moveLabel);
@@ -193,6 +197,30 @@ function makeColorScale(data) {
     return colorScale;
 
 };
+
+// function dynamicScale (csvData, currentVariable) {
+//     for (var i in csvData) {
+//         if (currentVariable == "Medicare Beneficiaries (%)" || currentVariable == "Cost Barriers (%)") {
+//             currentArray == [0, 25];
+//             scale = d3.scale.ordinal();
+//         } else if (currentVariable == "Hospital Beds Per 1000 People") {
+//               currentArray == [0, 4];
+//               // scale = d3.scale.ordinal();
+
+//         } else if (currentVariable == "Need Met in HPSAs (%)"){
+//             currentArray == [0, 4];
+//              // scale = d3.scale.ordinal();
+
+//         } else if (currentVariable == "Medicare Spending Per Enrollee"){
+//             currentArray == [0, 10000];
+//              // scale = d3.scale.ordinal();
+//         };
+//     };
+
+//     scale.domain(currentArray); //pass arrays as domain values
+//     return scale;
+// };
+  
 
 function choropleth (props, colorScale) {
     var val = parseFloat (props[expressed]);
@@ -313,9 +341,9 @@ function changeAttribute(attribute, csvData){
 
     var bars = d3.selectAll(".bars")
     //resort bars
-        .sort(function(a,b) {
+        .sort(function(a, b) {
         return a[expressed] - b[expressed];
-        })
+        });
         // .attr("x", function(d, i){
         //     return i * (chartInnerWidth / csvData.length) + leftPadding;
         // })
@@ -329,19 +357,19 @@ function changeAttribute(attribute, csvData){
         // //recolor bars
         // .style("fill", function(d){
         //     return choropleth(d, colorScale);
-        // });
+        // })
 
-        .transition() // add animation
-        .delay(function (d,i) {
-            return i * 20
-        })
-        .duration(500);
+        // .transition() // add animation
+        // .delay(function (d, i) {
+        //     return i * 20
+        // })
+        // .duration(500);
 
-        updateChart(bars, csvData.length, colorScale);
+        updateChart (bars, csvData.length, colorScale);
     }; // end of change attribute
 
 function updateChart (bars, n, colorScale) {
-        bars.attr("x", function(d,i){
+        bars.attr("x", function(d, i){
         return i * (chartWidth / n ) + leftPadding;
         })
     //resize bars
@@ -356,9 +384,9 @@ function updateChart (bars, n, colorScale) {
         return choropleth(d, colorScale);
         });
 
-
     var chartTitle = d3.select(".chartTitle")
-        .text("Number of " + expressed[3] + " in each state");
+        .text("Number of " + attrArray[0] + " in each state");
+
 
 };
 
@@ -372,27 +400,27 @@ function highlight(props){
     setLabel(props);
 };
 
-function dehighlight(props) {
+function dehighlight(props){
     var selected = d3.selectAll ("." + props.name) // deleted "." and removed null nodes? 
         .style({
             "stroke": function() {
                 return getStyle (this, "stroke")
             },
-            "stroke-width": function () {
-                return getStyle (this, "stroke-width")
+            "stroke-width": function(){
+                return getStyle(this, "stroke-width")
             }
         });
-function getStyle (element, styleName) {
-    var styleText = d3.selectAll(element)
+    function getStyle (element, styleName) {
+        var styleText = d3.select(element)
         .select("desc")
         .text();
-    var styleObject = JSON.parse(styleText);
+        var styleObject = JSON.parse(styleText);
 
     return styleObject[styleName];
         };
     d3.select(".infolabel")
         .remove();
-    };
+};
 
 function setLabel (props){
     //label content
