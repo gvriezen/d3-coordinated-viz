@@ -1,5 +1,7 @@
+/* background taken from http://subtlepatterns.com/subtle-white-feathers/ */
+
 body {
-    background-color: #fff;
+    background-image: url("subtle_white_feathers.png");
     }
 .map {
 	/*border: medium solid #fff;*/
@@ -10,6 +12,7 @@ body {
 
 .siteTitle {
     font-size: 24pt;
+    font-family: Garamond;
     color:#ff4d4d;
     position: absolute;
     font-weight: bold;
@@ -58,12 +61,13 @@ body {
     font-family: sans-serif;
     font-size: 1em;
     font-weight: bold;
-
+    fill: #ff4d4d;
 
 }
 
 .chartBackground {
     fill: transparent;
+    margin: 5px;
     /*position: absolute;*/
    /* float: right;*/
 
@@ -72,10 +76,8 @@ body {
 .chartFrame {
     fill: none;
     stroke: #999;
-    stroke-width: 3px;
+    stroke-width: 4px;
     shape-rendering: crispEdges;
-    margins: 5px;
-    padding: 2px;
    /* position: absolute;
     float: right;*/
 
@@ -113,8 +115,9 @@ option {
 
 .axis text {
     font-family: sans-serif;
-    font-size: 0.8em;
+    font-size: 0.7em;
     fill: #ff4d4d;
+    font-weight: bold;
 }
 
 .infolabel {
@@ -145,8 +148,10 @@ option {
 
 h1 {
     color: #ff4d4d;
+    font-family: Garamond;
 }
 
 h4 {
     color: #000;
+    font-family: Helvetica;
 }

@@ -1,7 +1,7 @@
 (function (){
 //psuedo-global variables
 //variables for data join
-    var attrArray = ["Medicare Beneficiaries (%)", "Hospital Beds Per 1000 People", "Need Met in HPSAs (%)", "Cost Barriers (%)", "Medicare Spending Per Enrollee"];
+    var attrArray = ["Medicare Beneficiaries (%)", "Hospital Beds Per 1000 People", "Need Met in HPSAs (%)", "Cost Barriers (%)", "Medicare Spending Per Enrollee (per $100)"];
     var expressed = attrArray[0]; //intial attribute
 
     var chartWidth = window.innerWidth * 0.5,
@@ -9,19 +9,16 @@
         leftPadding = 25,
         rightPadding = 2, 
         topBottomPadding = 5,
-        chartInnerWidth = chartWidth - leftPadding - rightPadding,
+        chartInnerWidth = chartWidth - leftPadding,
         chartInnerHeight = chartHeight - topBottomPadding * 2,
         translate = "translate(" + leftPadding + "," + topBottomPadding + ")";
 
     var yScale = d3.scale.linear ()
         .range([0, 460])
-        .domain([25, 0]);
+        .domain([100, 0]);
 
-    var currentVariable = attrArray[0];
-
-    // var currentArray = []; // holds current scale rendered on map
-
-    // create second svg element to hold bar chart
+    // var currentVariable = attrArray[0];
+    // var currentArray = [];
 
 //begin script when window loads
 window.onload = setMap();
@@ -39,6 +36,7 @@ function setMap(){
         .append("text")
         .attr("class", "siteTitle")
         .html("Quality and Access of US Healthcare");
+
     var map = d3.select("body")
         .append("svg")
         .attr("class", "map")
@@ -47,9 +45,6 @@ function setMap(){
 
     //create Albers equal area conic projection centered on France
     var projection = d3.geo.albersUsa()
-        // .center([39, 98])
-        // .rotate([-2, 0, 0])
-        // .parallels([43, 62])
         .scale(900)
         .translate([width / 2, height / 2]);
 
@@ -82,7 +77,7 @@ function setMap(){
 
        createDropdown (csvData);
 
-       // dynamicScale (csvData);
+       dynamicScale (csvData);
    };
 
 }; //end of setmap function
@@ -98,8 +93,6 @@ function setChart(csvData, colorScale) {
         .attr("height", chartHeight)
         .attr("class", "chart")
 
-         
-
     var chartFrame = chart.append("rect")
         .attr("class", "chartFrame")
         .attr("width", chartInnerWidth)
@@ -113,7 +106,7 @@ function setChart(csvData, colorScale) {
         .attr("transform", translate);
 
     // set bars for each state
-    var bars = chart.selectAll (".bars")
+    var bars = chart.selectAll (".bar")
         .data(csvData)
         .enter()
         .append("rect")
@@ -121,7 +114,7 @@ function setChart(csvData, colorScale) {
             return a[expressed] - b[expressed]
         })
         .attr("class", function(d) {
-            return "bars" + "regions " + d.name;
+            return "bar "+ d.name;
         })
         .attr("width", chartWidth / csvData.length - 2) 
         .on("mouseover", highlight)
@@ -131,34 +124,11 @@ function setChart(csvData, colorScale) {
     var desc = bars.append("desc")
             .text('{"stroke": "none", "stroke-width": "0px"}');
 
-    // var numbers = chart.selectAll(".numbers")
-    //     .data(csvData)
-    //     .enter()
-    //     .append("text")
-    //     .sort(function(a, b){
-    //         return a[expressed]- b[expressed]
-    //     })
-    //     .attr("class", function(d){
-    //         return "numbers " + d.name;
-    //     })
-    //     .attr("text-anchor", "middle")
-    //     .attr("x", function(d, i){
-    //         var fraction = (chartWidth - 27) / csvData.length;
-    //         return (i * fraction + (fraction - 1) / 2) + 25;
-    //     })
-    //     .attr("y", function(d){
-    //         return chartHeight - yScale(parseFloat(d[expressed])) - 20;
-    //     })
-    //     .text(function(d){
-    //         return d[expressed];
-    //     });
-
     //create a text element for the chart title
     var chartTitle = chart.append("text")
         .attr("x", 40)
-        .attr("y", 40)
+        .attr("y", 20)
         .attr("class", "chartTitle");
-        // .text("Number of Variable A for each state");
 
     //create vertical axis generator
     var yAxis = d3.svg.axis()
@@ -186,7 +156,6 @@ function makeColorScale(data) {
         "#002633"
     ];
     //create color sequence generator
-
     var colorScale = d3.scale.quantile ()
         .range(colorClasses);
     //build array of all values of the expressed attributes
@@ -201,27 +170,24 @@ function makeColorScale(data) {
 
 };
 
-// function dynamicScale (csvData, currentVariable) {
+// function dynamicScale (csvData) {
 //     for (var i in csvData) {
 //         if (currentVariable == "Medicare Beneficiaries (%)" || currentVariable == "Cost Barriers (%)") {
 //             currentArray == [0, 25];
 //             scale = d3.scale.ordinal();
 //         } else if (currentVariable == "Hospital Beds Per 1000 People") {
 //               currentArray == [0, 4];
-//               // scale = d3.scale.ordinal();
-
+    
 //         } else if (currentVariable == "Need Met in HPSAs (%)"){
 //             currentArray == [0, 4];
-//              // scale = d3.scale.ordinal();
-
-//         } else if (currentVariable == "Medicare Spending Per Enrollee"){
+            
+//         } else if (currentVariable == "Medicare Spending Per Enrollee (per $100)"){
 //             currentArray == [0, 10000];
-//              // scale = d3.scale.ordinal();
 //         };
 //     };
 
-//     scale.domain(currentArray); //pass arrays as domain values
-//     return scale;
+//     yScale.domain(currentArray); //pass arrays as domain values
+//     return yScale;
 // };
   
 
@@ -342,39 +308,23 @@ function changeAttribute(attribute, csvData){
             return choropleth(d.properties, colorScale)
         });
 
-    var bars = d3.selectAll(".bars")
+    var bars = d3.selectAll(".bar")
     //resort bars
         .sort(function(a, b) {
         return a[expressed] - b[expressed];
-        });
-        // .attr("x", function(d, i){
-        //     return i * (chartInnerWidth / csvData.length) + leftPadding;
-        // })
-        // //resize bars
-        // .attr("height", function(d, i){
-        //     return 463 - yScale(parseFloat(d[expressed]));
-        // })
-        // .attr("y", function(d, i){
-        //     return yScale(parseFloat(d[expressed])) + topBottomPadding;
-        // })
-        // //recolor bars
-        // .style("fill", function(d){
-        //     return choropleth(d, colorScale);
-        // })
-
-        // .transition() // add animation
-        // .delay(function (d, i) {
-        //     return i * 20
-        // })
-        // .duration(500);
+        })
+        .transition() // add animation
+        .delay(function (d, i) {
+            return i * 20
+        })
+        .duration(500);
 
         updateChart (bars, csvData.length, colorScale);
-        updateDescriptions (csvData);
     }; // end of change attribute
 
 function updateChart (bars, n, colorScale) {
         bars.attr("x", function(d, i){
-        return i * (chartWidth / n ) + leftPadding;
+        return i * (chartInnerWidth / n ) + leftPadding;
         })
     //resize bars
          .attr("height", function(d, i){
@@ -387,9 +337,8 @@ function updateChart (bars, n, colorScale) {
          .style("fill", function(d){
         return choropleth(d, colorScale);
         });
-
     var chartTitle = d3.select(".chartTitle")
-        .text("Number of " + attrArray[0] + " in each state");
+        .text("Number of " + expressed + " in each state");
 
 
 };
