@@ -1,13 +1,13 @@
 (function (){
 //psuedo-global variables
 //variables for data join
-    var attrArray = ["Medicare Beneficiaries", "Hospital Beds Per 1000", "Percent of Need Met HPSA", "Cost Barriers", "Medicare Spending Per Enrollee"];
+    var attrArray = ["Medicare Beneficiaries (%)", "Hospital Beds Per 1000 People", "Need Met in HPSAs (%)", "Cost Barriers (%)", "Medicare Spending Per Enrollee"];
     var expressed = attrArray[0]; //intial attribute
 
-    var chartWidth = 1060,
-        chartHeight = 463;
-        leftPadding = 5,
-        rightPadding = 5, 
+    var chartWidth = window.innerWidth * 0.9,
+        chartHeight = 473;
+        leftPadding = 25,
+        rightPadding = 2, 
         topBottomPadding = 5,
         chartInnerWidth = chartWidth - leftPadding - rightPadding,
         chartInnerHeight = chartHeight - topBottomPadding * 2,
@@ -15,12 +15,9 @@
 
     var yScale = d3.scale.linear ()
         .range([0, 460])
-        .domain([0, 30]);
+        .domain([25, 0]);
 
     // create second svg element to hold bar chart
-
-
-
 
 //begin script when window loads
 window.onload = setMap();
@@ -29,10 +26,15 @@ window.onload = setMap();
 function setMap(){
 
 	 //map frame dimensions
-    var width = 1060,
+    var width = window.innerWidth * 0.9,
         height = 460;
 
      //create new svg container for the map
+
+    var siteTitle = d3.select("body")
+        .append("text")
+        .attr("class", "siteTitle")
+        .html("Quality and Access of US Healthcare");
     var map = d3.select("body")
         .append("svg")
         .attr("class", "map")
@@ -44,7 +46,7 @@ function setMap(){
         // .center([39, 98])
         // .rotate([-2, 0, 0])
         // .parallels([43, 62])
-        .scale(1000)
+        .scale(900)
         .translate([width / 2, height / 2]);
 
     var path = d3.geo.path()
@@ -59,7 +61,7 @@ function setMap(){
         .defer(d3.json, "data/usa.topojson") //load background spatial data
         .await(callback);
 
-function callback(error, csvData, states){
+    function callback(error, csvData, states){
        //translate north america TopoJSON
        //place graticule on map
         setGraticule(map, path);
@@ -74,8 +76,9 @@ function callback(error, csvData, states){
 
        setChart (csvData, colorScale);
 
-       createDropdown (csvData, attrArray);
+       createDropdown (csvData);
 
+    
    };
 
 }; //end of setmap function
@@ -83,16 +86,6 @@ function callback(error, csvData, states){
 
 // bar chart
 function setChart(csvData, colorScale) {
-    //chart dimensions ; move up top to make global variable
-    // var chartWidth = 1060,
-    //     chartHeight = 463;
-    //     leftPadding = 5,
-    //     rightPadding = 5, 
-    //     topBottomPadding = 5,
-    //     chartInnerWidth = chartWidth - leftPadding - rightPadding,
-    //     chartInnerHeight = chartHeight - topBottomPadding * 2,
-    //     translate = "translate(" + leftPadding + "," + topBottomPadding + ")";
-
     // create second svg element to hold bar chart
 
     var chart = d3.select("body")
@@ -113,11 +106,6 @@ function setChart(csvData, colorScale) {
         .attr("height", chartInnerHeight)
         .attr("transform", translate);
 
-//move up top to make global variable
-    // var yScale = d3.scale.linear ()
-    //     .range([0, 460])
-    //     .domain([0, 30]);
-
     // set bars for each state
     var bars = chart.selectAll (".bars")
         .data(csvData)
@@ -129,55 +117,41 @@ function setChart(csvData, colorScale) {
         .attr("class", function(d) {
             return "bars" + d.name;
         })
-        .attr("width", chartWidth / csvData.length - 2) //cjange to 1?
+        .attr("width", chartInnerWidth / csvData.length - 10) 
         .on("mouseover", highlight)
         .on("mouseout", dehighlight)
-        .on("mousemove", moveLabel)
-        .attr ("x", function(d, i) {
-            return i * (chartWidth / csvData.length) + 10;
-        })
-        // .attr("height", 460)
-        // .attr("y", 0)
-        .attr("height", function (d){
-            return yScale (parseFloat (d[expressed]));
-        })
-        .attr("y", function (d){
-            return 460 - yScale (parseFloat (d[expressed]));
-        })
-        .style("fill", function(d){
-            return choropleth(d, colorScale);
-        });
+        .on("mousemove", moveLabel);
 
     var desc = bars.append("desc")
             .text('{"stroke": "none", "stroke-width": "0px"}');
 
-    var numbers = chart.selectAll(".numbers")
-        .data(csvData)
-        .enter()
-        .append("text")
-        .sort(function(a, b){
-            return a[expressed]-b[expressed]
-        })
-        .attr("class", function(d){
-            return "numbers " + d.name;
-        })
-        .attr("text-anchor", "bottom")
-        .attr("x", function(d, i){
-            var fraction = (chartWidth - 27) / csvData.length;
-            return (i * fraction + (fraction - 1) / 2) + 7;
-        })
-        .attr("y", function(d){
-            return chartHeight - yScale(parseFloat(d[expressed])) - 15;
-        })
-        .text(function(d){
-            return d[expressed];
-        });
+    // var numbers = chart.selectAll(".numbers")
+    //     .data(csvData)
+    //     .enter()
+    //     .append("text")
+    //     .sort(function(a, b){
+    //         return a[expressed]- b[expressed]
+    //     })
+    //     .attr("class", function(d){
+    //         return "numbers " + d.name;
+    //     })
+    //     .attr("text-anchor", "middle")
+    //     .attr("x", function(d, i){
+    //         var fraction = (chartWidth - 27) / csvData.length;
+    //         return (i * fraction + (fraction - 1) / 2) + 25;
+    //     })
+    //     .attr("y", function(d){
+    //         return chartHeight - yScale(parseFloat(d[expressed])) - 20;
+    //     })
+    //     .text(function(d){
+    //         return d[expressed];
+    //     });
 
     //create a text element for the chart title
     var chartTitle = chart.append("text")
         .attr("x", 40)
         .attr("y", 40)
-        .attr("class", "chartTitle")
+        .attr("class", "chartTitle");
         // .text("Number of Variable A for each state");
 
     //create vertical axis generator
@@ -191,18 +165,18 @@ function setChart(csvData, colorScale) {
         .attr("transform", translate)
         .call(yAxis);
 
-    updateChart(bars,csvData.length, colorScale);
+    updateChart(bars, csvData.length, colorScale);
 
 };   //end of setChart()
 
 
 function makeColorScale(data) {
     var colorClasses = [
-        "#D4B9DA",
-        "#C994C7",
-        "#DF65B0",
-        "#DD1C77",
-        "#980043"
+        "#ccf2ff",
+        "#66d9ff",
+        "#00bfff",
+        "#007399",
+        "#002633"
     ];
     //create color sequence generator
 
@@ -241,12 +215,12 @@ function setGraticule (map, path) {
             .attr("class", "gratBackground") //assign class for styling
             .attr("d", path) //project graticule
 
-       var gratLines = map.selectAll(".gratLines") //select graticule elements that will be created
-            .data(graticule.lines()) //bind graticule lines to each element to be created
-            .enter() //create an element for each datum
-            .append("path") //append each element to the svg as a path element
-            .attr("class", "gratLines") //assign class for styling
-            .attr("d", path); //project graticule lines
+       // var gratLines = map.selectAll(".gratLines") //select graticule elements that will be created
+       //      .data(graticule.lines()) //bind graticule lines to each element to be created
+       //      .enter() //create an element for each datum
+       //      .append("path") //append each element to the svg as a path element
+       //      .attr("class", "gratLines") //assign class for styling
+       //      .attr("d", path); //project graticule lines
  };
 
         
@@ -281,11 +255,11 @@ function setEnumerationUnits (northAmerica, map, path, colorScale){
             .enter()
             .append("path")
             .attr("class", function(d){
-                return "regions" + d.properties.name;
+                return "regions " + d.properties.name;
             })
             .attr("d", path)
             .style("fill", function(d){
-                return choropleth(d.properties, colorScale)
+                return choropleth(d.properties, colorScale);
             })
             .on("mouseover", function(d){
                 highlight(d.properties);
@@ -298,8 +272,6 @@ function setEnumerationUnits (northAmerica, map, path, colorScale){
         var desc = regions.append("desc")
             .text('{"stroke": "#000", "stroke-width": "0.5px"}');
 
-
-
     };
 
 function createDropdown(csvData) {
@@ -311,7 +283,6 @@ function createDropdown(csvData) {
             changeAttribute(this.value, csvData)
         });
     //add initial option
-
     var titleOption = dropdown.append("option")
         .attr ("class", titleOption)
         .attr("disabled", "true")
@@ -327,50 +298,68 @@ function createDropdown(csvData) {
 };
 
 //dropdown change listener handler
-function changeAttribute (attribute, csvData) {
+function changeAttribute(attribute, csvData){
     //change the expressed attribute
     expressed = attribute;
-
     //recreate color scale
-    var colorScale = makeColorScale (csvData);
-
+    var colorScale = makeColorScale(csvData);
     //recolor enumeration units
     var regions = d3.selectAll(".regions")
-        // .transition()
-        // .duration(1000)
+        .transition()
+        .duration(1000)
         .style("fill", function (d) {
             return choropleth(d.properties, colorScale)
         });
 
-    var bars = d3.selectAll(".bar")
+    var bars = d3.selectAll(".bars")
     //resort bars
         .sort(function(a,b) {
-        return b [expressed] - a[expressed];
-        });
-        // .transition() // add animation
-        // .delay(function (d,i) {
-        //     return i * 20
+        return a[expressed] - b[expressed];
+        })
+        // .attr("x", function(d, i){
+        //     return i * (chartInnerWidth / csvData.length) + leftPadding;
         // })
-        // .duration(500);
+        // //resize bars
+        // .attr("height", function(d, i){
+        //     return 463 - yScale(parseFloat(d[expressed]));
+        // })
+        // .attr("y", function(d, i){
+        //     return yScale(parseFloat(d[expressed])) + topBottomPadding;
+        // })
+        // //recolor bars
+        // .style("fill", function(d){
+        //     return choropleth(d, colorScale);
+        // });
+
+        .transition() // add animation
+        .delay(function (d,i) {
+            return i * 20
+        })
+        .duration(500);
 
         updateChart(bars, csvData.length, colorScale);
     }; // end of change attribute
 
 function updateChart (bars, n, colorScale) {
         bars.attr("x", function(d,i){
-        return i * (chartInnerWidth / n ) + leftPadding;
+        return i * (chartWidth / n ) + leftPadding;
         })
     //resize bars
-         .attr("height", function(d,i){
-        return 463 - yScale(parseFloat(d[expressed])) + topBottomPadding;
+         .attr("height", function(d, i){
+        return 463 - yScale(parseFloat(d[expressed]));
         })
+         .attr("y", function(d, i){
+        return yScale(parseFloat(d[expressed])) + topBottomPadding;
+         })
     //recolor bars
          .style("fill", function(d){
         return choropleth(d, colorScale);
         });
 
+
     var chartTitle = d3.select(".chartTitle")
-        .text("Number of Variable " + expressed[3] + " in each region");
+        .text("Number of " + expressed[3] + " in each state");
+
 };
 
 function highlight(props){
@@ -380,10 +369,11 @@ function highlight(props){
             "stroke": "blue",
             "stroke-width": "2"
         });
+    setLabel(props);
 };
 
-function dehighlight (props) {
-    var selected = d3.selectAll ("." + props.name)
+function dehighlight(props) {
+    var selected = d3.selectAll ("." + props.name) // deleted "." and removed null nodes? 
         .style({
             "stroke": function() {
                 return getStyle (this, "stroke")
@@ -423,7 +413,7 @@ function setLabel (props){
 
 function moveLabel () {
 
-    //get width of label
+    // //get width of label
     var labelWidth = d3.select(".infolabel")
         .node ()
         .getBoundingClientRect()
